@@ -1,7 +1,7 @@
 #include "Detector.hpp"
 
 void main() {
-	int value = 100; //100 red 68 blue
+	int value = 70; //100 red 68 blue
 	int alpha=100, beta=100; //46 blue
 	cv::namedWindow("OutPut", cv::WINDOW_NORMAL);
 	cv::namedWindow("OutPut_Aft", cv::WINDOW_NORMAL);
@@ -10,7 +10,7 @@ void main() {
 	cv::createTrackbar("bin_thres", "Binary OutPut", &value, 255);
 	cv::createTrackbar("alpha", "Binary OutPut", &alpha, 200);
 	cv::createTrackbar("beta", "Binary OutPut", &beta, 200);
-	Detector::LightParams myR = {1.1,100,1.35,1.15,2.9,2.5,2.05,1.6,10000,1.8};	//灯光筛选相关数据
+	Detector::LightParams myR = {1.1,200,1.35,1.15,2.9,2.5,2.05,1.6,30000,9000,1.8};	//灯光筛选相关数据
 	Detector det(value, 1, myR);
 
 	/*cv::Mat img = cv::imread("ori.png");
@@ -31,7 +31,7 @@ void main() {
 		det.UpdateParams(value, 1, myR);
 		det.detect(frame);
 		cv::imshow("Binary OutPut", det.GetBinaryImg());
-		cv::imshow("OutPut",det.drawResult(1, cv::Scalar(255, 255, 255), 7));
+		cv::imshow("OutPut",det.drawResult(4, cv::Scalar(255, 255, 255), 7));
 		cv::imshow("OutPut_Aft", det.drawResult(5, cv::Scalar(255, 255, 255), 7));
 		//if(!det.target_img.empty())	cv::imshow("Target", det.target_img);
 		cv::waitKey(1000 / (int)video.get(cv::CAP_PROP_FPS));

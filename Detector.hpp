@@ -12,12 +12,12 @@ const int BLUE = 1;
 class Line {
 public:
 	Line() = default;
-	explicit Line(const float& a, const float& b, const float& c);	//直接构造直线
-	explicit Line(const cv::Point &p1,const cv::Point &p2);	//根据两点构造直线
-	Line GetNormalLine(const cv::Point& p);	//过一点求该直线法线
-	float GetY(const float& x);	//根据x求y
-	bool IfSameSide(const cv::Point& p1, const cv::Point& p2); //判断两点是否在直线同侧
-	bool IfBetweenLines(const cv::Point& p, const Line& line);	//判断一点是否在两线之间
+	explicit Line(const float& a, const float& b, const float& c);	
+	explicit Line(const cv::Point &p1,const cv::Point &p2);	
+	Line GetNormalLine(const cv::Point& p);	
+	float GetY(const float& x);	
+	bool IfSameSide(const cv::Point& p1, const cv::Point& p2); 
+	bool IfBetweenLines(const cv::Point& p, const Line& line);	
 	void DrawLine(cv::Mat InputArray, const cv::Scalar& color, const int& thickness);
 
 private:
@@ -44,7 +44,6 @@ public:
 		} 
 		ratio = length / width;
 	}
-	
 	cv::Point2f point[4];
 	cv::Point2f top, bottom;
 	double length;
@@ -67,7 +66,7 @@ public:
 		float BL_Maxratio, BL_Minratio;
 		float SL_Maxratio, SL_Minratio;
 		float HL_Maxratio, HL_Minratio;
-		float HugeLight_area;
+		float HugeLight_Maxarea, HugeLight_Minarea;
 		float Area_ratio;
 	};
 
