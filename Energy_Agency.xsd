@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="Energy_Agency"
+    targetNamespace="http://tempuri.org/Energy_Agency.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://tempuri.org/Energy_Agency.xsd"
+    xmlns:mstns="http://tempuri.org/Energy_Agency.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+</xs:schema>

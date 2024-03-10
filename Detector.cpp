@@ -1,4 +1,5 @@
 #include "Detector.hpp"
+#include "D:/OpenCV Base/opencv/MyBuild/install/include/opencv2/core.hpp"
 //直接构造直线
 Line::Line(const float& a, const float& b, const float& c):a(a),b(b),c(c){}
 
@@ -55,11 +56,12 @@ void Detector::UpdateParams(const int& bin_thres_, const int& color_, const Ligh
 	R = R_;
 }
 
-void Detector::detect(const cv::Mat& input) {
+void Detector::detect(const cv::Mat& input,const int & sin) {
 	Attack_Target = NULL;
 	R_Target = NULL;
 	input.copyTo(src_img);
-	binary_img = preprocessImage(input);
+	adjust_img = levelAdjust(input, sin);
+	binary_img = preprocessImage(adjust_img);
 	findLights();
 	ClassifyLights();
 	GetAttackTarget();
@@ -74,6 +76,45 @@ cv::Mat Detector::preprocessImage(const cv::Mat& input) {
 	morphologyEx(Binary_img, Binary_img, MORPH_ERODE, kernel, Point(-1, -1), 1);
 	morphologyEx(Binary_img, Binary_img, MORPH_DILATE, kernel, Point(-1, -1), 2);
 	return Binary_img;
+}
+
+//色阶调整
+cv::Mat Detector::levelAdjust(const cv::Mat & img, int Sin, int Hin, double Mt, int Sout, int Hout)
+{
+	using namespace cv;
+	Sin = min(max(Sin, 0), Hin - 2);               // Sin, 黑场阈值, 0 <= Sin < Hin
+	Hin = min(Hin, 255);                           // Hin, 白场阈值, Sin < Hin <= 255
+	Mt = min(max(Mt, (double)0.01), (double)9.99); // Mt, 灰场调节值, 0.01~9.99
+	Sout = min(max(Sout, 0), Hout - 2);            // Sout, 输出黑场阈值, 0 <= Sout < Hout
+	Hout = min(Hout, 255);                         // Hout, 输出白场阈值, Sout < Hout <= 255
+
+	double difIn = Hin - Sin;
+	double difOut = Hout - Sout;
+	uchar tableData[256];
+	for (int i = 0; i < 256; i++)
+	{
+		double V1 = min(max(255 * (i - Sin) / difIn, (double)0), (double)255);     // 输入动态线性拉伸
+		double V2 = 255 * std::pow(V1 / 255, 1 / Mt);                              // 灰场伽马调节
+		tableData[i] = min(max(Sout + difOut * V2 / 255, (double)0), (double)255); // 输出线性拉伸
+	}
+	Mat table(1, 256, CV_8UC1, tableData);
+	Mat imgTone;
+	LUT(img, table, imgTone);
+	return imgTone;
+}
+
+cv::Mat useHSV(cv::Mat src, int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV)
+{
+	using namespace cv;
+	Mat HSVMat, mergeMat;
+	std::vector<Mat> planes;
+	cvtColor(src, HSVMat, COLOR_BGR2HSV);
+	split(HSVMat, planes);
+	equalizeHist(planes[2], planes[2]);
+	merge(planes, mergeMat);
+	Mat imgThresholded;
+	inRange(mergeMat, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded);
+	return imgThresholded;
 }
 
 /*

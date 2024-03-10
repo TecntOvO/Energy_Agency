@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ENERGY_AGENCY_DETECTOR_HPP_
 #define ENERGY_AGENCY_DETECTOR_HPP_
 
@@ -72,8 +73,9 @@ public:
 
 	Detector(const int& bin_thres, const int& color, const LightParams& R);
 	void UpdateParams(const int& bin_thres, const int& color, const LightParams& R);
-	void detect(const cv::Mat & input);
+	void detect(const cv::Mat & input, const int& sin);
 	cv::Mat preprocessImage(const cv::Mat& input);
+	cv::Mat levelAdjust(const cv::Mat& img, int Sin = 100, int Hin = 255, double Mt = 1.0, int Sout = 0, int Hout = 255);
 	void findLights();
 	void ClassifyLights();
 	void GetAttackTarget();
@@ -82,6 +84,7 @@ public:
 
 	int Agency_light_color;
 	cv::Mat target_img;
+	cv::Mat adjust_img;
 	
 private:
 	std::vector<Light> Circle_L;
