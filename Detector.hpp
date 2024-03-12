@@ -5,9 +5,11 @@
 #include <vector>
 #include <opencv2\opencv.hpp>
 
+#include "Setting.hpp"
+
 //大能量机关灯条颜色
-const int RED = 0;
-const int BLUE = 1;
+#define RED  0
+#define BLUE 1
 
 //直线类
 class Line {
@@ -59,44 +61,35 @@ private:
 //检测类
 class Detector {
 public:
-
-	struct LightParams
-	{
-		float CL_Maxratio;
-		float CircleLight_area;
-		float BL_Maxratio, BL_Minratio;
-		float SL_Maxratio, SL_Minratio;
-		float HL_Maxratio, HL_Minratio;
-		float HugeLight_Maxarea, HugeLight_Minarea;
-		float Area_ratio;
-	};
-
-	Detector(const int& bin_thres, const int& color, const LightParams& R);
-	void UpdateParams(const int& bin_thres, const int& color, const LightParams& R);
-	void detect(const cv::Mat & input, const int& sin);
+	//Detector(const int& bin_thres, const int& color, const LightParams& R);
+	Detector(const cv::String path);
+	//void UpdateParams(const int& bin_thres, const int& color);
+	void detect(const cv::Mat& input,const int& color);
 	cv::Mat preprocessImage(const cv::Mat& input);
-	cv::Mat levelAdjust(const cv::Mat& img, int Sin = 100, int Hin = 255, double Mt = 1.0, int Sout = 0, int Hout = 255);
+	cv::Mat levelAdjust(const cv::Mat& img, int Sin, int Hin = 255, double Mt = 1.0, int Sout = 0, int Hout = 255);
+	cv::Mat useHSV(const cv::Mat &src, const int& iLowH, const int& iHighH, const int& iLowS, const int& iHighS, const int& iLowV, const int& iHighV);
 	void findLights();
 	void ClassifyLights();
 	void GetAttackTarget();
 	const cv::Mat drawResult(const int& Type, const cv::Scalar& color, const int& thick);
-	cv::Mat GetBinaryImg();
+	cv::Mat GetPreprocess_Img();
 
-	int Agency_light_color;
+	Setting settings;
+	
 	cv::Mat target_img;
 	cv::Mat adjust_img;
+	cv::Mat preprocess_src_img;
 	
 private:
+	int Detector_color;
 	std::vector<Light> Circle_L;
 	std::vector<Light> Big_L;
 	std::vector<Light> Small_L;
 	std::vector<Light> Huge_L;
 	Light* Attack_Target;
 	Light* R_Target;
-	cv::Mat binary_img;
+	cv::Mat preprocess_img;
 	cv::Mat src_img;
-	int bin_thres, color;
-	LightParams R;
 };
 
 #endif

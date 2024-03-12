@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opencv_storage>
+    <!-- 1->进入debug， 0->退出 -->
+    <debug>0</debug>
+    <!--相位和锁帧-->
+    <n_pred>7</n_pred>
+    <lock_time>7500</lock_time>
+    <!--for AngleSolver-->
+    <!--平移-->
+    <yaw_bias>0.000000</yaw_bias>
+    <pitch_bias>-0.500000</pitch_bias>
+    <!--旋转-->
+    <ptz_camera_x>0.000000</ptz_camera_x>
+    <ptz_camera_y>0.000000</ptz_camera_y>
+    <ptz_camera_z>100.000000</ptz_camera_z>
+    <!-- auto shoot -->
+    <!-- 蓝色亮度阈值 -->
+    <blue_bright_max>152</blue_bright_max>
+    <!-- 蓝色颜色阈值 -->
+    <blue_color_max>81</blue_color_max>
+    <!-- 红色亮度阈值 -->
+    <red_bright_max>89</red_bright_max>
+    <!-- 红色颜色阈值 -->
+    <red_color_max>92</red_color_max>
+    <!--exp_time-->
+    <red_exp_t>2412</red_exp_t>
+    <blue_exp_t>1919</blue_exp_t>
+    <!--k value for gravity-->
+    <k1>-0.00504590</k1>
+    <k2>-0.00022200</k2>
+    <k3>-0.00002210</k3>
+    <!--Energy-->
+    <blue_bright_energy>55</blue_bright_energy>
+    <blue_color_energy>92</blue_color_energy>
+    <red_bright_energy>40</red_bright_energy>
+    <red_color_energy>30</red_color_energy>
+    <blue_energy_exp_t>782</blue_energy_exp_t>
+    <red_energy_exp_t>1173</red_energy_exp_t>
+    <element1>13</element1>
+    <element2>13</element2>
+    <element3>7</element3>
+    <Radius>151</Radius>
+    <CalculateSpeedPer>2</CalculateSpeedPer>
+    <DelayAngle>25</DelayAngle>
+    <DelayMillisecond>515</DelayMillisecond>
+    <yaw>163</yaw>
+    <pitch>185</pitch>
+    <speed_limit>0.500000</speed_limit>
+    <cali_size>10</cali_size>
+    <!--2023_NEW_Energy-->
+    <blue_st>2</blue_st>
+    <blue_Sin>100</blue_Sin>
+    <blue_erode>0</blue_erode>
+    <blue_dilate>1</blue_dilate>
+    <blue_ks>3</blue_ks>
+    <red_st>1</red_st>
+    <red_Sin>59</red_Sin>
+    <red_erode>0</red_erode>
+    <red_dilate>1</red_dilate>
+    <red_ks>3</red_ks>
+    <!--blue_HSV-->
+    <blue_iLowH>37</blue_iLowH>
+    <blue_iHighH>255</blue_iHighH>
+    <blue_iLowS>0</blue_iLowS>
+    <blue_iHighS>255</blue_iHighS>
+    <blue_iLowV>100</blue_iLowV>
+    <blue_iHighV>255</blue_iHighV>
+    <!--red_HSV-->
+    <red_iLowH>0</red_iLowH>
+    <red_iHighH>53</red_iHighH>
+    <red_iLowS>0</red_iLowS>
+    <red_iHighS>255</red_iHighS>
+    <red_iLowV>33</red_iLowV>
+    <red_iHighV>255</red_iHighV>
+    <!--shooting mode: 0:Blue, 1:red-->
+    <detect_mode>65537</detect_mode>
+    <!--camera_index-->
+    <!--RMCAM1 RMCAM2 RMCAM3 RMCAM4 主摄像头-->
+    <camera_index>/dev/video2</camera_index>
+    <!--test_video_dir-->
+    <!--测试视频路径-->
+    <test_video_dir>/home/t/桌面/1111111/1.avi</test_video_dir>
+</opencv_storage>

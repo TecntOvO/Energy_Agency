@@ -1,5 +1,7 @@
 #include "Detector.hpp"
 #include "D:/OpenCV Base/opencv/MyBuild/install/include/opencv2/core.hpp"
+
+
 //直接构造直线
 Line::Line(const float& a, const float& b, const float& c):a(a),b(b),c(c){}
 
@@ -48,34 +50,65 @@ void Line::DrawLine(cv::Mat InputArray,const cv::Scalar & color,const int & thic
 
 
 
-Detector::Detector(const int& bin_thres, const int& color, const LightParams& R):bin_thres(bin_thres),color(color),R(R) {}
+Detector::Detector(const cv::String path){settings = Setting(path);}
 
-void Detector::UpdateParams(const int& bin_thres_, const int& color_, const LightParams& R_) {
-	bin_thres = bin_thres_;
-	color = color_;
-	R = R_;
-}
+//void Detector::UpdateParams(const int& bin_thres_, const int& color_) {
+//	settings.Binary_Value = bin_thres_;
+//	settings.Detect_Color = color_;
+//}
 
-void Detector::detect(const cv::Mat& input,const int & sin) {
+void Detector::detect(const cv::Mat& input,const int & color){
+	Detector_color = color;
 	Attack_Target = NULL;
 	R_Target = NULL;
+	std::vector<cv::Mat> src_channels;
 	input.copyTo(src_img);
-	adjust_img = levelAdjust(input, sin);
-	binary_img = preprocessImage(adjust_img);
-	findLights();
-	ClassifyLights();
-	GetAttackTarget();
+	if (Detector_color == RED) {
+		adjust_img = levelAdjust(input, settings.red_Sin);
+		split(adjust_img, src_channels);
+		if (settings.red_st == 0)cvtColor(input, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
+		else if (settings.red_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
+		else if (settings.red_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
+		else if (settings.red_st == 3)preprocess_src_img = useHSV(adjust_img, settings.red_iLowH, settings.red_iHighH, settings.red_iLowS, settings.red_iHighS, settings.red_iLowV, settings.red_iHighV);
+		preprocess_img = preprocessImage(preprocess_src_img);
+
+		findLights();
+		ClassifyLights();
+		GetAttackTarget();
+	}
+	else if (Detector_color == BLUE) {
+		adjust_img = levelAdjust(input, settings.blue_Sin);
+		split(adjust_img, src_channels);
+		if (settings.blue_st == 0)cvtColor(input, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
+		else if (settings.blue_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
+		else if (settings.blue_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
+		else if (settings.blue_st == 3)preprocess_src_img = useHSV(adjust_img, settings.blue_iLowH, settings.blue_iHighH, settings.blue_iLowS, settings.blue_iHighS, settings.blue_iLowV, settings.blue_iHighV);
+		preprocess_img = preprocessImage(preprocess_src_img);
+
+		findLights();
+		ClassifyLights();
+		GetAttackTarget();
+	}
+	
 }
 
 cv::Mat Detector::preprocessImage(const cv::Mat& input) {
 	using namespace cv;
-	Mat Gray_img,Binary_img;
-	cvtColor(input, Gray_img, COLOR_BGR2GRAY);	//转化为灰度图
-	threshold(Gray_img, Binary_img, bin_thres, 255, THRESH_BINARY);	//二值化
-	Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-	morphologyEx(Binary_img, Binary_img, MORPH_ERODE, kernel, Point(-1, -1), 1);
-	morphologyEx(Binary_img, Binary_img, MORPH_DILATE, kernel, Point(-1, -1), 2);
-	return Binary_img;
+	
+	Mat Convert_img, preprocess_img;
+	if (Detector_color == RED) {
+		threshold(input, preprocess_img, settings.Binary_Value, 255, THRESH_BINARY);	//二值化
+		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.red_ks, settings.red_ks));
+		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.red_erode);
+		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.red_dilate);
+	}
+	else if (Detector_color == BLUE) {
+		threshold(input, preprocess_img, settings.Binary_Value, 255, THRESH_BINARY);	//二值化
+		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.blue_ks, settings.blue_ks));
+		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.blue_erode);
+		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.blue_dilate);
+	}
+	return preprocess_img;
 }
 
 //色阶调整
@@ -103,7 +136,8 @@ cv::Mat Detector::levelAdjust(const cv::Mat & img, int Sin, int Hin, double Mt, 
 	return imgTone;
 }
 
-cv::Mat useHSV(cv::Mat src, int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV)
+//HSV图像提取
+cv::Mat Detector::useHSV(const cv::Mat& src, const int& iLowH, const int& iHighH, const int& iLowS, const int& iHighS, const int& iLowV, const int& iHighV)
 {
 	using namespace cv;
 	Mat HSVMat, mergeMat;
@@ -132,7 +166,7 @@ void Detector::findLights() {
 	Small_L.clear();
 	Huge_L.clear();
 
-	cv::findContours(binary_img, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+	cv::findContours(preprocess_img, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 	//遍历所有轮廓
 	auto it_contour = contours.begin();
 	auto it_hierarchy = hierarchy.begin();
@@ -146,17 +180,17 @@ void Detector::findLights() {
 
 			//轮廓分类
 			double light_area = light.length * light.width;
-			if (light.ratio<R.CL_Maxratio && light_area>R.CircleLight_area) {
+			if (light.ratio<settings.CL_Maxratio && light_area>settings.CircleLight_area) {
 				Circle_L.push_back(light);
 			}
-			else if (light.ratio < R.BL_Maxratio && light.ratio>R.BL_Minratio) {
+			else if (light.ratio < settings.BL_Maxratio && light.ratio>settings.BL_Minratio) {
 				Big_L.push_back(light);
 			}
-			else if (light.ratio < R.SL_Maxratio && light.ratio>R.SL_Minratio) {
+			else if (light.ratio < settings.SL_Maxratio && light.ratio>settings.SL_Minratio) {
 				Small_L.push_back(light);
 			}
-			else if (light.ratio < R.HL_Maxratio && light.ratio > R.HL_Minratio &&
-				light_area > R.HugeLight_Minarea && light_area < R.HugeLight_Maxarea) {
+			else if (light.ratio < settings.HL_Maxratio && light.ratio > settings.HL_Minratio &&
+				light_area > settings.HL_Minarea && light_area < settings.HL_Maxarea) {
 				Huge_L.push_back(light);
 			}
 		}
@@ -168,7 +202,7 @@ void Detector::ClassifyLights() {
 	for (auto light = Huge_L.begin();light != Huge_L.end();light++) {
 		float Area_raito = light->length * light->width / cv::contourArea(light->contour);
 		 //cv::putText(result_img, std::to_string(Area_raito), light->center, 1, 2, cv::Scalar(255, 255, 255),3);
-		if (Area_raito > R.Area_ratio) {
+		if (Area_raito > settings.AttackArea_ratio) {
 			Attack_Target = light._Ptr;
 			break;
 		}
@@ -180,15 +214,15 @@ void Detector::ClassifyLights() {
 		auto ReferLine_2 = Line(Attack_Target->point[2], Attack_Target->point[3]);
 
 		//绘制直线
-		ReferLine_1.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
-		ReferLine_2.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
+		//ReferLine_1.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
+		//ReferLine_2.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
 
 
 		for (auto light = Circle_L.begin();light != Circle_L.end();light++) {
 			//根据其中一条短边做过圆形灯条轮廓中心点的法线
 			auto normalLine = ReferLine_1.GetNormalLine(light->center);
 			//绘制直线
-			normalLine.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
+			//normalLine.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
 
 			//当法线与另一条直线的两点间有交点（即直线在两点之间时），并且该中心点不在两条短边所做直线之间时判断为R点
 			if (!normalLine.IfSameSide(Attack_Target->point[2], Attack_Target->point[3]) &&
@@ -217,7 +251,7 @@ void Detector::GetAttackTarget() {
 
 		//投射变换
 		Mat transform = getPerspectiveTransform(Attack_Target->point, recpoint);
-		warpPerspective(binary_img, perspectMat, transform, binary_img.size());
+		warpPerspective(src_img, perspectMat, transform, src_img.size());
 		target_img = perspectMat(Rect(0,0, Attack_Target->width, Attack_Target->length));
 
 		/* 传统定位打击中心方法，现采用深度学习方法评估
@@ -263,11 +297,17 @@ const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const
 	else if (Type == 2)L = Small_L;
 	else if (Type == 3)L = Huge_L;
 	else if (Type == 4 && Attack_Target) {
-		cv::minEnclosingCircle(Attack_Target->contour, center, radius);
-		//cv::circle(result_img, center, static_cast<int>(radius), color, thick);
-		cv::ellipse(result_img, *Attack_Target, color, thick);
-		std::vector<cv::Point2f> points;
-		for (int i = 0;i < 4;i++) {
+		std::vector<cv::Point2f> rect_points;
+		auto rect = cv::minAreaRect(Attack_Target->contour);
+		rect.points(rect_points);
+		for (int i = 0;i < rect_points.size();i++) {
+			cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255));
+		}
+
+		//cv::ellipse(result_img, *Attack_Target, color, thick);
+
+		//以下代码用于确定拟合矩形的边点
+		/*for (int i = 0;i < 4;i++) {
 			cv::circle(result_img, Attack_Target->point[i], 2, cv::Scalar(255, 255, 255), 2);
 			cv::putText(result_img, std::to_string(i), Attack_Target->point[i], 1, 2, cv::Scalar(255, 255, 255), 3);
 		}
@@ -276,7 +316,7 @@ const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const
 		}
 		else {
 			cv::putText(result_img, cv::format("no"), cv::Point(100, 100), 1, 2, cv::Scalar(255, 0, 0), 3);
-		}
+		}*/
 		return result_img;
 	}
 	else if (Type == 5 && R_Target) {
@@ -293,6 +333,6 @@ const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const
 	return result_img;
 }
 
-cv::Mat Detector::GetBinaryImg() {
-	return binary_img;
+cv::Mat Detector::GetPreprocess_Img() {
+	return preprocess_img;
 }
