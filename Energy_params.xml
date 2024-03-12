@@ -49,14 +49,15 @@
     <speed_limit>0.500000</speed_limit>
     <cali_size>10</cali_size>
     <!--2023_NEW_Energy-->
-	<binary_value>253</binary_value>
-	
-    <blue_st>2</blue_st>
-    <blue_Sin>115</blue_Sin>
+
+	<blue_binary_value>80</blue_binary_value>
+    <blue_st>0</blue_st>
+    <blue_Sin>240</blue_Sin>
     <blue_erode>0</blue_erode>
-    <blue_dilate>1</blue_dilate>
+    <blue_dilate>2</blue_dilate>
     <blue_ks>3</blue_ks>
-	
+
+	<red_binary_value>253</red_binary_value>
     <red_st>1</red_st>
     <red_Sin>79</red_Sin>
     <red_erode>0</red_erode>
@@ -75,7 +76,7 @@
 	<hugelight_Highratio>2.05</hugelight_Highratio>
 	<hugelight_Lowratio>1.6</hugelight_Lowratio>
 	
-	<hugelight_Maxarea>30000</hugelight_Maxarea>
+	<hugelight_Maxarea>40000</hugelight_Maxarea>
 	<hugelight_Minarea>9000</hugelight_Minarea>
 	
 	<attackarea_Lowratio>1.8</attackarea_Lowratio>

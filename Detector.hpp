@@ -71,7 +71,7 @@ public:
 	void findLights();
 	void ClassifyLights();
 	void GetAttackTarget();
-	const cv::Mat drawResult(const int& Type, const cv::Scalar& color, const int& thick);
+	const cv::Mat drawResult(const int& Type);
 	cv::Mat GetPreprocess_Img();
 
 	Setting settings;

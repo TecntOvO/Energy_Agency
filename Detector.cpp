@@ -66,7 +66,7 @@ void Detector::detect(const cv::Mat& input,const int & color){
 	if (Detector_color == RED) {
 		adjust_img = levelAdjust(input, settings.red_Sin);
 		split(adjust_img, src_channels);
-		if (settings.red_st == 0)cvtColor(input, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
+		if (settings.red_st == 0)cvtColor(adjust_img, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
 		else if (settings.red_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
 		else if (settings.red_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
 		else if (settings.red_st == 3)preprocess_src_img = useHSV(adjust_img, settings.red_iLowH, settings.red_iHighH, settings.red_iLowS, settings.red_iHighS, settings.red_iLowV, settings.red_iHighV);
@@ -79,7 +79,7 @@ void Detector::detect(const cv::Mat& input,const int & color){
 	else if (Detector_color == BLUE) {
 		adjust_img = levelAdjust(input, settings.blue_Sin);
 		split(adjust_img, src_channels);
-		if (settings.blue_st == 0)cvtColor(input, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
+		if (settings.blue_st == 0)cvtColor(adjust_img, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
 		else if (settings.blue_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
 		else if (settings.blue_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
 		else if (settings.blue_st == 3)preprocess_src_img = useHSV(adjust_img, settings.blue_iLowH, settings.blue_iHighH, settings.blue_iLowS, settings.blue_iHighS, settings.blue_iLowV, settings.blue_iHighV);
@@ -97,13 +97,13 @@ cv::Mat Detector::preprocessImage(const cv::Mat& input) {
 	
 	Mat Convert_img, preprocess_img;
 	if (Detector_color == RED) {
-		threshold(input, preprocess_img, settings.Binary_Value, 255, THRESH_BINARY);	//二值化
+		threshold(input, preprocess_img, settings.Red_Binary_Value, 255, THRESH_BINARY);	//二值化
 		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.red_ks, settings.red_ks));
 		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.red_erode);
 		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.red_dilate);
 	}
 	else if (Detector_color == BLUE) {
-		threshold(input, preprocess_img, settings.Binary_Value, 255, THRESH_BINARY);	//二值化
+		threshold(input, preprocess_img, settings.Blue_Binary_Value, 255, THRESH_BINARY);	//二值化
 		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.blue_ks, settings.blue_ks));
 		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.blue_erode);
 		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.blue_dilate);
@@ -286,7 +286,7 @@ void Detector::GetAttackTarget() {
 }
 
 
-const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const int & thick) {
+const cv::Mat Detector::drawResult(const int& Type) {
 	cv::Mat result_img;
 	src_img.copyTo(result_img);
 	cv::Point2f center;
@@ -301,7 +301,7 @@ const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const
 		auto rect = cv::minAreaRect(Attack_Target->contour);
 		rect.points(rect_points);
 		for (int i = 0;i < rect_points.size();i++) {
-			cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255));
+			cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255),3);
 		}
 
 		//cv::ellipse(result_img, *Attack_Target, color, thick);
@@ -321,13 +321,13 @@ const cv::Mat Detector::drawResult(const int& Type,const cv::Scalar &color,const
 	}
 	else if (Type == 5 && R_Target) {
 		cv::minEnclosingCircle(R_Target->contour, center, radius);
-		cv::ellipse(result_img, *R_Target, color, thick);
+		cv::ellipse(result_img, *R_Target, cv::Scalar(0,255,0),5);
 	}
 	else return result_img;
 	for (auto light = L.begin();light != L.end();light++) {
 		//cv::minEnclosingCircle(light->contour, center, radius);
 		//cv::circle(result_img, center, static_cast<int>(radius), color, thick);
-		cv::ellipse(result_img,*light,color,thick);
+		cv::ellipse(result_img,*light,cv::Scalar(255,255,255), 5);
 	}
 
 	return result_img;

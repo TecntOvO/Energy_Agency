@@ -16,13 +16,14 @@ Setting::Setting(cv::String path):path(path) {
     fs["hugelight_Minarea"] >> this->HL_Minarea;
     fs["attackarea_Lowratio"] >> this->AttackArea_ratio;
 
-    fs["binary_value"] >> this->Binary_Value;
+    fs["blue_binary_value"] >> this->Blue_Binary_Value;
     fs["blue_st"] >> this->blue_st; 
     fs["blue_Sin"] >> this->blue_Sin;
     fs["blue_erode"] >> this->blue_erode;
     fs["blue_dilate"] >> this->blue_dilate;
     fs["blue_ks"] >> this->blue_ks;
 
+    fs["red_binary_value"] >> this->Red_Binary_Value;
     fs["red_st"] >> this->red_st;
     fs["red_Sin"] >> this->red_Sin;
     fs["red_erode"] >> this->red_erode;

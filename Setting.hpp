@@ -10,7 +10,8 @@ public:
     Setting() = default;
     explicit Setting(cv::String path);
 
-	int Binary_Value;   //二值化阈值  
+	int Blue_Binary_Value;   //二值化阈值  
+    int Red_Binary_Value;
 
     //灯条筛选相关数据
     float CL_Maxratio;  //圆形灯条最大长宽比
