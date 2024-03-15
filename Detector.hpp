@@ -9,8 +9,8 @@
 
 namespace ENERGY_COLOR {
 //大能量机关灯条颜色
-static short int RED = 0;
-static short int BLUE = 1;
+static int RED = 0;
+static int BLUE = 1;
 }
 
 //直线类
@@ -48,16 +48,30 @@ public:
 			length = value1;width = value2;
 		} 
 		ratio = length / width;
+		cv::Point2f p1 = (point[0] + point[1]) / 2;
+		cv::Point2f p2 = (point[2] + point[3]) / 2;
+		top = (p1.y < p2.y) ? p1 : p2;
+		bottom= (p1.y < p2.y) ? p2 : p1;
+		tilt_angle = std::atan2(top.x - bottom.x, top.y - bottom.y) / CV_PI * 180;
 	}
 	cv::Point2f point[4];
 	cv::Point2f top, bottom;
 	double length;
 	double width;
 	double ratio;
+	float tilt_angle;
 	std::vector<cv::Point> contour;
 
 private:
 
+};
+
+//R
+class R_Target :public Light {
+public:
+	R_Target() = default;
+	explicit R_Target(const Light& light) :Light(light) {};
+private:
 };
 
 //击打目标
@@ -91,9 +105,7 @@ public:
 		float R_minratio;
 		int R_minarea, R_maxarea;
 	};
-	//Detector(const int& bin_thres, const int& color, const LightParams& R);
-	Detector(const cv::String pharams_path,const cv::String &model_path, cv::String& label_path, const int& color);
-	//void UpdateParams(const int& bin_thres, const int& color);
+	Detector(const std::string &pharams_path,const int& color);
 	void detect(const cv::Mat& input);
 	cv::Mat preprocessImage(const cv::Mat& input);
 	cv::Mat levelAdjust(const cv::Mat& img, int Sin, int Hin = 255, double Mt = 1.0, int Sout = 0, int Hout = 255);
@@ -111,19 +123,19 @@ public:
 	
 private:
 	cv::dnn::Net net_;
+	cv::Mat preprocess_img;
+	cv::Mat src_img;
 	std::vector<cv::String> class_names_;
 	std::vector<cv::String> ignore_class_;
 
-	bool findAT;
 	Setting settings;
 	std::vector<Light> Circle_L;
 	std::vector<Light> Big_L;
 	std::vector<Light> Small_L;
-	std::vector<Light> Huge_L;
+	std::vector<Light> Huge_L;\
+	bool findAT, findR;
 	Attack_Target AT;
-	Light* R_Target;
-	cv::Mat preprocess_img;
-	cv::Mat src_img;
+	R_Target RT;
 };
 
 #endif

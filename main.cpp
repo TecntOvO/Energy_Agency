@@ -1,13 +1,13 @@
 #include "Detector.hpp"
 
 void main() {
-	Detector det("Energy_params.xml",ENERGY_COLOR::RED);
-
+	Detector det("./data/Energy_params.xml", ENERGY_COLOR::RED);
+	//"./model/Energy_params.xml", "./model/model.onnx", "./model/coco.names", ENERGY_COLOR::RED
 	cv::namedWindow("OutPut", cv::WINDOW_NORMAL);
-	cv::namedWindow("OutPut_Aft", cv::WINDOW_NORMAL);
+	//cv::namedWindow("OutPut_Aft", cv::WINDOW_NORMAL);
 	//cv::namedWindow("Adjust OutPut", cv::WINDOW_NORMAL);
 	cv::namedWindow("Preprocess OutPut", cv::WINDOW_NORMAL);
-	//cv::namedWindow("Preprocess src OutPut", cv::WINDOW_NORMAL);
+	cv::namedWindow("Preprocess src OutPut", cv::WINDOW_NORMAL);
 	cv::namedWindow("Control", cv::WINDOW_NORMAL);
 	cv::namedWindow("Target", cv::WINDOW_NORMAL);
 
@@ -31,7 +31,7 @@ void main() {
 	cv::imshow("OutPut", det.result_img);
 	cv::waitKey();*/
 	
-	cv::VideoCapture video("../关灯-红方大能量机关-正在激活状态.MP4");
+	cv::VideoCapture video("../2_red.MP4");
 	
 	if (!video.isOpened()) exit(0);
 	cv::Mat frame;
@@ -40,8 +40,8 @@ void main() {
 		if (frame.empty()) break;
 		det.detect(frame);
 		cv::imshow("Preprocess OutPut", det.GetPreprocess_Img());
-		cv::imshow("OutPut",det.drawResult(4));
-		cv::imshow("OutPut_Aft", det.drawResult(5));
+		cv::imshow("OutPut",det.drawResult(6));
+		//cv::imshow("OutPut_Aft", det.drawResult(5));
 		//cv::imshow("Adjust OutPut", det.adjust_img);
 		cv::imshow("Preprocess src OutPut", det.preprocess_src_img);
 		if(!det.target_img.empty())	cv::imshow("Target", det.target_img);

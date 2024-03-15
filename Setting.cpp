@@ -47,5 +47,8 @@ Setting::Setting(cv::String path):path(path) {
     fs["red_iLowV"] >> this->red_iLowV;
     fs["red_iHighV"] >> this->red_iHighV;
 
+    fs["model_path"] >> this->model_path;
+    fs["label_path"] >> this->label_path;
+
     fs.release();
 }

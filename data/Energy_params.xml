@@ -57,14 +57,14 @@
     <blue_dilate>2</blue_dilate>
     <blue_ks>3</blue_ks>
 
-	<red_binary_value>253</red_binary_value>
+	<red_binary_value>70</red_binary_value>
     <red_st>1</red_st>
-    <red_Sin>79</red_Sin>
+    <red_Sin>127</red_Sin>
     <red_erode>0</red_erode>
-    <red_dilate>2</red_dilate>
+    <red_dilate>1</red_dilate>
     <red_ks>3</red_ks>
 	<!--Light_classify_pharams-->
-	<circlelight_Highratio>1.1</circlelight_Highratio>
+	<circlelight_Highratio>1.2</circlelight_Highratio>
 	<circlelight_Area>200</circlelight_Area>
 	
 	<biglight_Highratio>1.35</biglight_Highratio>
@@ -97,6 +97,11 @@
     <red_iHighS>255</red_iHighS>
     <red_iLowV>33</red_iLowV>
     <red_iHighV>255</red_iHighV>
+	
+	<!--模型与标签文件路径-->
+	<model_path>./model/model.onnx</model_path>
+	<label_path>./model/coco.names</label_path>
+	
     <!--shooting mode: 0:Blue, 1:red-->
     <detect_mode>0</detect_mode>
     <!--camera_index-->

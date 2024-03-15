@@ -51,6 +51,9 @@ public:
     int red_iLowV;
     int red_iHighV;
 
+    //Ä£ÐÍ
+    cv::String model_path;
+    cv::String label_path;
 
 private:
     cv::String path;

@@ -49,11 +49,11 @@ void Line::DrawLine(cv::Mat InputArray,const cv::Scalar & color,const int & thic
 
 
 
-Detector::Detector(const cv::String pharams_path, const cv::String& model_path, cv::String& label_path, const int& color) {
+Detector::Detector(const std::string& pharams_path, const int& color) {
 	settings = Setting(pharams_path);
-	net_ = cv::dnn::readNetFromONNX(model_path);
+	//net_ = cv::dnn::readNetFromONNX(settings.model_path);
 
-	std::ifstream lable_file(label_path);
+	std::ifstream lable_file(settings.label_path);
 	cv::String line;
 	while (std::getline(lable_file, line)) {
 		class_names_.push_back(line);
@@ -96,7 +96,7 @@ Detector::Detector(const cv::String pharams_path, const cv::String& model_path, 
 
 void Detector::detect(const cv::Mat& input){
 	findAT = false;
-	R_Target = NULL;
+	findR = false;
 	std::vector<cv::Mat> src_channels;
 	input.copyTo(src_img);
 	adjust_img = levelAdjust(input, pharams.sin);
@@ -120,6 +120,7 @@ cv::Mat Detector::preprocessImage(const cv::Mat& input) {
 	Mat kernel = getStructuringElement(MORPH_RECT, Size(pharams.ks, pharams.ks));
 
 	threshold(input, process_img, pharams.Binary_Value, 255, THRESH_BINARY);	//二值化
+	
 	morphologyEx(process_img, process_img, MORPH_ERODE, kernel, Point(-1, -1), pharams.erode);
 	morphologyEx(process_img, process_img, MORPH_DILATE, kernel, Point(-1, -1), pharams.dilate);
 	return process_img;
@@ -243,7 +244,8 @@ void Detector::ClassifyLights() {
 			//当法线与另一条直线的两点间有交点（即直线在两点之间时），并且该中心点不在两条短边所做直线之间时判断为R点
 			if (!normalLine.IfSameSide(AT.point[2], AT.point[3]) &&
 				ReferLine_1.IfBetweenLines(light->center, ReferLine_2)) {
-				R_Target = light._Ptr;
+				RT = R_Target(*light);
+				findR = true;
 				break;
 			}
 		}
@@ -254,7 +256,8 @@ void Detector::ClassifyLights() {
 		for (auto light = Circle_L.begin();light != Circle_L.end();light++) {
 			double area = light->length * light->width;
 			if (light->ratio > settings.R_minratio&&area>settings.R_minarea&& area < settings.R_maxarea) {
-				R_Target = light._Ptr;
+				RT = R_Target(*light);
+				findR = true;
 				break;
 			}
 		}
@@ -276,7 +279,7 @@ void Detector::GetAttackTarget() {
 		warpPerspective(src_img, perspectMat, transform, src_img.size());
 		target_img = perspectMat(Rect(0,0, AT.width, AT.length));
 
-		Mat img = target_img.clone();
+		/*Mat img = target_img.clone();
 		img = img / 255.0;
 
 		Mat blob;
@@ -296,7 +299,9 @@ void Detector::GetAttackTarget() {
 		int label_id = class_id_point.x;
 
 		AT.confidence = confidence;
-		AT.color = class_names_[label_id];
+		AT.color = class_names_[label_id];*/
+
+
 		/* 传统定位打击中心方法，现采用深度学习方法评估
 		//首先拓宽边界防止打击点运算过程中偏移，再进行强闭运算和开运算消除打击位置以外轮廓
 		Mat border_img,Open_img, Close_img;
@@ -362,15 +367,38 @@ const cv::Mat Detector::drawResult(const int& Type) {
 		}*/
 		return result_img;
 	}
-	else if (Type == 5 && R_Target) {
-		cv::minEnclosingCircle(R_Target->contour, center, radius);
-		cv::ellipse(result_img, *R_Target, cv::Scalar(0,255,0),5);
+	else if (Type == 5 && findR) {
+		cv::minEnclosingCircle(RT.contour, center, radius);
+		
+	}
+	else if (Type == 6 ) {
+		if (findR) {
+			cv::minEnclosingCircle(RT.contour, center, radius);
+			cv::circle(result_img, center, radius * 1.5, cv::Scalar(0, 255, 0), 3);
+		}
+		if (findAT) {
+			std::vector<cv::Point2f> rect_points;
+			auto rect = cv::minAreaRect(AT.contour);
+			rect.points(rect_points);
+			for (int i = 0;i < rect_points.size();i++) {
+				cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255), 3);
+			}
+			
+		}
+		return result_img;
 	}
 	else return result_img;
 	for (auto light = L.begin();light != L.end();light++) {
 		//cv::minEnclosingCircle(light->contour, center, radius);
 		//cv::circle(result_img, center, static_cast<int>(radius), color, thick);
-		cv::ellipse(result_img,*light,cv::Scalar(255,255,255), 5);
+		std::vector<cv::Point2f> rect_points;
+		auto rect = cv::minAreaRect(light->contour);
+		rect.points(rect_points);
+		for (int i = 0;i < rect_points.size();i++) {
+			cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255), 3);
+			cv::putText(result_img, cv::format("Angle:%f",light->angle), light->center, 1, 2, cv::Scalar(255, 0, 0), 2);
+			cv::putText(result_img, cv::format("Ratio:%f", light->ratio), cv::Point2f(light->center.x, light->center.y+50), 1, 2, cv::Scalar(255, 0, 0), 2);
+		}
 	}
 
 	return result_img;
