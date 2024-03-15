@@ -1,6 +1,5 @@
 #include "Detector.hpp"
-#include "D:/OpenCV Base/opencv/MyBuild/install/include/opencv2/core.hpp"
-
+#include <fstream>
 
 //直接构造直线
 Line::Line(const float& a, const float& b, const float& c):a(a),b(b),c(c){}
@@ -50,65 +49,80 @@ void Line::DrawLine(cv::Mat InputArray,const cv::Scalar & color,const int & thic
 
 
 
-Detector::Detector(const cv::String path){settings = Setting(path);}
+Detector::Detector(const cv::String pharams_path, const cv::String& model_path, cv::String& label_path, const int& color) {
+	settings = Setting(pharams_path);
+	net_ = cv::dnn::readNetFromONNX(model_path);
+
+	std::ifstream lable_file(label_path);
+	cv::String line;
+	while (std::getline(lable_file, line)) {
+		class_names_.push_back(line);
+	}
+
+	if (color == ENERGY_COLOR::RED) {
+		pharams.st = settings.red_st;
+		pharams.sin = settings.red_Sin;
+		pharams.iLowH = settings.red_iLowH;
+		pharams.iHighH = settings.red_iHighH;
+		pharams.iLowS = settings.red_iLowS;
+		pharams.iHighS = settings.red_iHighS;
+		pharams.iLowV = settings.red_iLowV;
+		pharams.iHighV = settings.red_iHighV;
+		pharams.Binary_Value = settings.Red_Binary_Value;
+		pharams.ks = settings.red_ks;
+		pharams.erode = settings.red_erode;
+		pharams.dilate = settings.red_dilate;
+	}
+	else if (color == ENERGY_COLOR::BLUE) {
+		pharams.st = settings.blue_st;
+		pharams.sin = settings.blue_Sin;
+		pharams.iLowH = settings.blue_iLowH;
+		pharams.iHighH = settings.blue_iHighH;
+		pharams.iLowS = settings.blue_iLowS;
+		pharams.iHighS = settings.blue_iHighS;
+		pharams.iLowV = settings.blue_iLowV;
+		pharams.iHighV = settings.blue_iHighV;
+		pharams.Binary_Value = settings.Blue_Binary_Value;
+		pharams.ks = settings.blue_ks;
+		pharams.erode = settings.blue_erode;
+		pharams.dilate = settings.blue_dilate;
+	}
+}
 
 //void Detector::UpdateParams(const int& bin_thres_, const int& color_) {
 //	settings.Binary_Value = bin_thres_;
 //	settings.Detect_Color = color_;
 //}
 
-void Detector::detect(const cv::Mat& input,const int & color){
-	Detector_color = color;
-	Attack_Target = NULL;
+void Detector::detect(const cv::Mat& input){
+	findAT = false;
 	R_Target = NULL;
 	std::vector<cv::Mat> src_channels;
 	input.copyTo(src_img);
-	if (Detector_color == RED) {
-		adjust_img = levelAdjust(input, settings.red_Sin);
-		split(adjust_img, src_channels);
-		if (settings.red_st == 0)cvtColor(adjust_img, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
-		else if (settings.red_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
-		else if (settings.red_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
-		else if (settings.red_st == 3)preprocess_src_img = useHSV(adjust_img, settings.red_iLowH, settings.red_iHighH, settings.red_iLowS, settings.red_iHighS, settings.red_iLowV, settings.red_iHighV);
-		preprocess_img = preprocessImage(preprocess_src_img);
+	adjust_img = levelAdjust(input, pharams.sin);
+	split(adjust_img, src_channels);
 
-		findLights();
-		ClassifyLights();
-		GetAttackTarget();
-	}
-	else if (Detector_color == BLUE) {
-		adjust_img = levelAdjust(input, settings.blue_Sin);
-		split(adjust_img, src_channels);
-		if (settings.blue_st == 0)cvtColor(adjust_img, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
-		else if (settings.blue_st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
-		else if (settings.blue_st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
-		else if (settings.blue_st == 3)preprocess_src_img = useHSV(adjust_img, settings.blue_iLowH, settings.blue_iHighH, settings.blue_iLowS, settings.blue_iHighS, settings.blue_iLowV, settings.blue_iHighV);
-		preprocess_img = preprocessImage(preprocess_src_img);
+	if (pharams.st == 0)cvtColor(adjust_img, preprocess_src_img, cv::COLOR_BGR2GRAY);	//转化为灰度图
+	else if (pharams.st == 1)subtract(src_channels[2], src_channels[0], preprocess_src_img);	//红色通道 - 蓝色通道（提取红色）
+	else if (pharams.st == 2)subtract(src_channels[0], src_channels[2], preprocess_src_img);	//蓝色通道 - 红色通道（提取蓝色）
+	else if (pharams.st == 3)preprocess_src_img = useHSV(adjust_img, pharams.iLowH, pharams.iHighH, pharams.iLowS, pharams.iHighS, pharams.iLowV, pharams.iHighV);
 
-		findLights();
-		ClassifyLights();
-		GetAttackTarget();
-	}
-	
+	preprocess_img = preprocessImage(preprocess_src_img);
+	findLights();
+	ClassifyLights();
+	GetAttackTarget();
 }
 
 cv::Mat Detector::preprocessImage(const cv::Mat& input) {
 	using namespace cv;
 	
-	Mat Convert_img, preprocess_img;
-	if (Detector_color == RED) {
-		threshold(input, preprocess_img, settings.Red_Binary_Value, 255, THRESH_BINARY);	//二值化
-		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.red_ks, settings.red_ks));
-		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.red_erode);
-		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.red_dilate);
-	}
-	else if (Detector_color == BLUE) {
-		threshold(input, preprocess_img, settings.Blue_Binary_Value, 255, THRESH_BINARY);	//二值化
-		Mat kernel = getStructuringElement(MORPH_RECT, Size(settings.blue_ks, settings.blue_ks));
-		morphologyEx(preprocess_img, preprocess_img, MORPH_ERODE, kernel, Point(-1, -1), settings.blue_erode);
-		morphologyEx(preprocess_img, preprocess_img, MORPH_DILATE, kernel, Point(-1, -1), settings.blue_dilate);
-	}
-	return preprocess_img;
+	Mat process_img;
+	Mat kernel = getStructuringElement(MORPH_RECT, Size(pharams.ks, pharams.ks));
+
+	threshold(input, process_img, pharams.Binary_Value, 255, THRESH_BINARY);	//二值化
+	morphologyEx(process_img, process_img, MORPH_ERODE, kernel, Point(-1, -1), pharams.erode);
+	morphologyEx(process_img, process_img, MORPH_DILATE, kernel, Point(-1, -1), pharams.dilate);
+	return process_img;
 }
 
 //色阶调整
@@ -135,6 +149,7 @@ cv::Mat Detector::levelAdjust(const cv::Mat & img, int Sin, int Hin, double Mt, 
 	LUT(img, table, imgTone);
 	return imgTone;
 }
+
 
 //HSV图像提取
 cv::Mat Detector::useHSV(const cv::Mat& src, const int& iLowH, const int& iHighH, const int& iLowS, const int& iHighS, const int& iLowV, const int& iHighV)
@@ -166,7 +181,7 @@ void Detector::findLights() {
 	Small_L.clear();
 	Huge_L.clear();
 
-	cv::findContours(preprocess_img, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+	cv::findContours(preprocess_img, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 	//遍历所有轮廓
 	auto it_contour = contours.begin();
 	auto it_hierarchy = hierarchy.begin();
@@ -203,15 +218,16 @@ void Detector::ClassifyLights() {
 		float Area_raito = light->length * light->width / cv::contourArea(light->contour);
 		 //cv::putText(result_img, std::to_string(Area_raito), light->center, 1, 2, cv::Scalar(255, 255, 255),3);
 		if (Area_raito > settings.AttackArea_ratio) {
-			Attack_Target = light._Ptr;
+			AT=Attack_Target(*light);
+			findAT = true;
 			break;
 		}
 	}
 	//利用打击目标构造直线筛选中心R
-	if (Attack_Target) {
+	if (findAT) {
 		//根据两条短边构造直线
-		auto ReferLine_1 = Line(Attack_Target->point[0], Attack_Target->point[1]);
-		auto ReferLine_2 = Line(Attack_Target->point[2], Attack_Target->point[3]);
+		auto ReferLine_1 = Line(AT.point[0], AT.point[1]);
+		auto ReferLine_2 = Line(AT.point[2], AT.point[3]);
 
 		//绘制直线
 		//ReferLine_1.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
@@ -225,7 +241,7 @@ void Detector::ClassifyLights() {
 			//normalLine.DrawLine(src_img, cv::Scalar(255, 255, 255), 2);
 
 			//当法线与另一条直线的两点间有交点（即直线在两点之间时），并且该中心点不在两条短边所做直线之间时判断为R点
-			if (!normalLine.IfSameSide(Attack_Target->point[2], Attack_Target->point[3]) &&
+			if (!normalLine.IfSameSide(AT.point[2], AT.point[3]) &&
 				ReferLine_1.IfBetweenLines(light->center, ReferLine_2)) {
 				R_Target = light._Ptr;
 				break;
@@ -235,25 +251,52 @@ void Detector::ClassifyLights() {
 
 	//无打击目标情况
 	else {
-		R_Target = NULL;
+		for (auto light = Circle_L.begin();light != Circle_L.end();light++) {
+			double area = light->length * light->width;
+			if (light->ratio > settings.R_minratio&&area>settings.R_minarea&& area < settings.R_maxarea) {
+				R_Target = light._Ptr;
+				break;
+			}
+		}
 	}
 }
 
 void Detector::GetAttackTarget() {
-	if (Attack_Target) {
+	if (findAT) {
 		using namespace cv;
 		Point2f recpoint[4];
 		Mat perspectMat;
 		recpoint[0] = Point2f(0, 0);
-		recpoint[1] = Point2f(Attack_Target->width, 0);
-		recpoint[2] = Point2f(Attack_Target->width, Attack_Target->length);
-		recpoint[3] = Point2f(0, Attack_Target->length);
+		recpoint[1] = Point2f(AT.width, 0);
+		recpoint[2] = Point2f(AT.width, AT.length);
+		recpoint[3] = Point2f(0, AT.length);
 
 		//投射变换
-		Mat transform = getPerspectiveTransform(Attack_Target->point, recpoint);
+		Mat transform = getPerspectiveTransform(AT.point, recpoint);
 		warpPerspective(src_img, perspectMat, transform, src_img.size());
-		target_img = perspectMat(Rect(0,0, Attack_Target->width, Attack_Target->length));
+		target_img = perspectMat(Rect(0,0, AT.width, AT.length));
 
+		Mat img = target_img.clone();
+		img = img / 255.0;
+
+		Mat blob;
+		cv::dnn::blobFromImage(img, blob);
+		net_.setInput(blob);
+		Mat outputs = net_.forward();
+
+		float max_prob = *std::max_element(outputs.begin<float>(), outputs.end<float>());
+		Mat softmax_prob;
+		exp(outputs - max_prob, softmax_prob);
+		float sum = static_cast<float>(cv::sum(softmax_prob)[0]);
+		softmax_prob /= sum;
+
+		double confidence;
+		cv::Point class_id_point;
+		minMaxLoc(softmax_prob.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
+		int label_id = class_id_point.x;
+
+		AT.confidence = confidence;
+		AT.color = class_names_[label_id];
 		/* 传统定位打击中心方法，现采用深度学习方法评估
 		//首先拓宽边界防止打击点运算过程中偏移，再进行强闭运算和开运算消除打击位置以外轮廓
 		Mat border_img,Open_img, Close_img;
@@ -296,9 +339,9 @@ const cv::Mat Detector::drawResult(const int& Type) {
 	else if (Type == 1)L = Big_L;
 	else if (Type == 2)L = Small_L;
 	else if (Type == 3)L = Huge_L;
-	else if (Type == 4 && Attack_Target) {
+	else if (Type == 4 && findAT) {
 		std::vector<cv::Point2f> rect_points;
-		auto rect = cv::minAreaRect(Attack_Target->contour);
+		auto rect = cv::minAreaRect(AT.contour);
 		rect.points(rect_points);
 		for (int i = 0;i < rect_points.size();i++) {
 			cv::line(result_img, rect_points[i], rect_points[(i + 1) % rect_points.size()], cv::Scalar(255, 255, 255),3);

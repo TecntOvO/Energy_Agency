@@ -15,6 +15,9 @@ Setting::Setting(cv::String path):path(path) {
     fs["hugelight_Maxarea"] >> this->HL_Maxarea;
     fs["hugelight_Minarea"] >> this->HL_Minarea;
     fs["attackarea_Lowratio"] >> this->AttackArea_ratio;
+    fs["R_minratio"] >> this->R_minratio;
+    fs["R_minarea"] >> this->R_minarea;
+    fs["R_maxarea"] >> this->R_maxarea;
 
     fs["blue_binary_value"] >> this->Blue_Binary_Value;
     fs["blue_st"] >> this->blue_st; 

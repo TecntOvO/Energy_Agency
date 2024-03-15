@@ -78,7 +78,10 @@
 	
 	<hugelight_Maxarea>40000</hugelight_Maxarea>
 	<hugelight_Minarea>9000</hugelight_Minarea>
-	
+
+	<R_minratio>0.6</R_minratio>
+	<R_minarea>170</R_minarea>
+	<R_maxarea>900</R_maxarea>
 	<attackarea_Lowratio>1.8</attackarea_Lowratio>
     <!--blue_HSV-->
     <blue_iLowH>37</blue_iLowH>

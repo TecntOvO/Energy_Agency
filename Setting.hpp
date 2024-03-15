@@ -21,6 +21,8 @@ public:
     float HL_Maxratio, HL_Minratio;
     float HL_Maxarea, HL_Minarea;
     float AttackArea_ratio;
+    float R_minratio;
+    int R_minarea, R_maxarea;
 
     int blue_st;    //选择处理图像来源 1 提取红色图 2 提取蓝色图 0 灰度图 3 HSV图
     int blue_Sin;   //色阶调整

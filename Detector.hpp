@@ -7,9 +7,11 @@
 
 #include "Setting.hpp"
 
+namespace ENERGY_COLOR {
 //大能量机关灯条颜色
-#define RED  0
-#define BLUE 1
+static short int RED = 0;
+static short int BLUE = 1;
+}
 
 //直线类
 class Line {
@@ -58,13 +60,41 @@ private:
 
 };
 
+//击打目标
+class Attack_Target :public Light {
+public:
+	Attack_Target() = default;
+	explicit Attack_Target(const Light& light) :Light(light) {};
+	float confidence;
+	cv::String color;
+private:
+};
+
 //检测类
 class Detector {
 public:
+	struct  Pharams
+	{
+		int sin,ks,st,Binary_Value;
+		int erode, dilate;
+		int iLowH, iHighH;
+		int iLowS, iHighS;
+		int iLowV, iHighV;
+
+		float CL_Maxratio;
+		float CircleLight_area;
+		float BL_Maxratio, BL_Minratio; 
+		float SL_Maxratio, SL_Minratio;
+		float HL_Maxratio, HL_Minratio;
+		float HL_Maxarea, HL_Minarea;
+		float AttackArea_ratio;
+		float R_minratio;
+		int R_minarea, R_maxarea;
+	};
 	//Detector(const int& bin_thres, const int& color, const LightParams& R);
-	Detector(const cv::String path);
+	Detector(const cv::String pharams_path,const cv::String &model_path, cv::String& label_path, const int& color);
 	//void UpdateParams(const int& bin_thres, const int& color);
-	void detect(const cv::Mat& input,const int& color);
+	void detect(const cv::Mat& input);
 	cv::Mat preprocessImage(const cv::Mat& input);
 	cv::Mat levelAdjust(const cv::Mat& img, int Sin, int Hin = 255, double Mt = 1.0, int Sout = 0, int Hout = 255);
 	cv::Mat useHSV(const cv::Mat &src, const int& iLowH, const int& iHighH, const int& iLowS, const int& iHighS, const int& iLowV, const int& iHighV);
@@ -74,19 +104,23 @@ public:
 	const cv::Mat drawResult(const int& Type);
 	cv::Mat GetPreprocess_Img();
 
-	Setting settings;
-	
+	Pharams pharams;
 	cv::Mat target_img;
 	cv::Mat adjust_img;
 	cv::Mat preprocess_src_img;
 	
 private:
-	int Detector_color;
+	cv::dnn::Net net_;
+	std::vector<cv::String> class_names_;
+	std::vector<cv::String> ignore_class_;
+
+	bool findAT;
+	Setting settings;
 	std::vector<Light> Circle_L;
 	std::vector<Light> Big_L;
 	std::vector<Light> Small_L;
 	std::vector<Light> Huge_L;
-	Light* Attack_Target;
+	Attack_Target AT;
 	Light* R_Target;
 	cv::Mat preprocess_img;
 	cv::Mat src_img;
